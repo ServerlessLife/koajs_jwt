@@ -6,10 +6,27 @@ import * as userEvaluationService from './services/userEvaluationService';
 import * as authenticationService from './services/authenticationService';
 import * as jwt from 'koa-jwt';
 import { config } from './config';
+import { MyHttpError } from './services/myHttpError';
 
 const server = new Koa();
 server.use(json());
 server.use(bodyParser());
+
+server.use(async (ctx, next) => {
+    try {
+        await next();
+    }
+    catch (err) {                
+        if (err instanceof MyHttpError) {
+            //my custom error
+            ctx.status = err.status;
+            ctx.body = { message: err.message };
+        }
+        else {
+            throw err;
+        }
+    }
+});
 
 const routerUnprotected = new Router();
 const routerProtected = new Router();
@@ -65,9 +82,7 @@ routerUnprotected.get('/most-liked', async (ctx) => {
 });
 
 server.use(routerUnprotected.routes()).use(routerUnprotected.allowedMethods());
-
 server.use(jwt({ secret: config.jwtSecret }));
-
 server.use(routerProtected.routes()).use(routerProtected.allowedMethods());
 
-export { server   } ;
+export { server };

@@ -6,6 +6,7 @@ import { server } from '../server/server';
 import * as request from 'supertest';
 import * as dbService from '../server/services/dbService';
 import * as fs from 'fs';
+import { config } from '../server/config';
 
 beforeAll(async () => {
   const connection = await dbService.getSingleConnection({ multipleStatements: true });
@@ -20,6 +21,8 @@ beforeAll(async () => {
       USE user_evalutation_test;
       ` + create_db_sql
     );
+
+    dbService.setDatabase("user_evalutation_test");
   }
   finally {
     try { connection.end() } catch (err) { }
@@ -27,6 +30,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  /*
   const connection = await dbService.getSingleConnection({ multipleStatements: true });
   try {
     await connection.query(
@@ -38,11 +42,170 @@ afterAll(async () => {
   finally {
     try { connection.end() } catch (err) { }
   }
-
+*/
   dbService.closePool();
 });
 
-describe('basic route tests', () => {
+let userJohnDoe = {
+  username: "jonhdoe",
+  name: "John",
+  surname: "Doe",
+  email: "jonh.doe@gmail.com",
+  password: "jonhdoe_pass"
+}
+
+describe('Authetnication tests', () => {
+  test('Singup sloud fail, because of missing data', async () => {
+    let user = {
+      ...userJohnDoe,
+      username: undefined
+    }
+
+    let response = await request(server.callback()).post('/signup').send(user);
+    expect(response.status).toEqual(400);
+    expect(response.body).toHaveProperty("message");
+
+    user = {
+      ...userJohnDoe,
+      name: undefined
+    }
+
+    response = await request(server.callback()).post('/signup').send(user);
+    expect(response.status).toEqual(400);
+    expect(response.body).toHaveProperty("message");
+
+    user = {
+      ...userJohnDoe,
+      surname: undefined
+    }
+
+    response = await request(server.callback()).post('/signup').send(user);
+    expect(response.status).toEqual(400);
+    expect(response.body).toHaveProperty("message");
+
+    user = {
+      ...userJohnDoe,
+      email: undefined
+    }
+
+    response = await request(server.callback()).post('/signup').send(user);
+    expect(response.status).toEqual(400);
+    expect(response.body).toHaveProperty("message");
+
+    user = {
+      ...userJohnDoe,
+      password: undefined
+    }
+
+    response = await request(server.callback()).post('/signup').send(user);
+    expect(response.status).toEqual(400);
+    expect(response.body).toHaveProperty("message");
+  });
+
+  test('Singup sloud fail, because of too long string', async () => {
+    let user = {
+      ...userJohnDoe,
+      username: 'x'.repeat(500)
+    }
+
+    let response = await request(server.callback()).post('/signup').send(user);
+    expect(response.status).toEqual(400);
+    expect(response.body).toHaveProperty("message");
+
+    user = {
+      ...userJohnDoe,
+      name: 'x'.repeat(500)
+    }
+
+    response = await request(server.callback()).post('/signup').send(user);
+    expect(response.status).toEqual(400);
+    expect(response.body).toHaveProperty("message");
+
+    user = {
+      ...userJohnDoe,
+      surname: 'x'.repeat(500)
+    }
+
+    response = await request(server.callback()).post('/signup').send(user);
+    expect(response.status).toEqual(400);
+    expect(response.body).toHaveProperty("message");
+
+    user = {
+      ...userJohnDoe,
+      email: 'x'.repeat(500)
+    }
+
+    response = await request(server.callback()).post('/signup').send(user);
+    expect(response.status).toEqual(400);
+    expect(response.body).toHaveProperty("message");
+
+    user = {
+      ...userJohnDoe,
+      password: 'x'.repeat(500)
+    }
+  });
+
+  test('Singup user John Doe should return token', async () => {
+    const response = await request(server.callback()).post('/signup').send(userJohnDoe);
+    expect(response.status).toEqual(200);
+    expect(response.body).toHaveProperty("token");
+
+  });
+
+  test('Singup user Toni Baloni should return token', async () => {
+    let user = {
+      username: "tonibaloni",
+      name: "Toni",
+      surname: "Baloni",
+      email: "toni.baloni@gmail.com",
+      password: "tonibaloni_pass"
+    }
+
+    const response = await request(server.callback()).post('/signup').send(user);
+    expect(response.status).toEqual(200);
+    expect(response.body).toHaveProperty("token");
+
+  });
+
+  test('Login should fail because of wrong password', async () => {
+    const response = await request(server.callback()).post('/login').send({
+      username: userJohnDoe.username,
+      password: 'xxxx'
+    });
+    expect(response.status).toEqual(401);
+    expect(response.body).toHaveProperty("message");
+
+  });
+
+  let userJohnDoeToken;
+
+  test('Login user John Doe', async () => {
+    const response = await request(server.callback()).post('/login').send({
+      username: userJohnDoe.username,
+      password: userJohnDoe.password
+    });
+
+    userJohnDoeToken = response.body;
+
+    expect(response.status).toEqual(200);
+    expect(response.body).toHaveProperty("token");
+
+  });
+
+  // test('Read my (John Doe) data', async () => {
+  //   const response = await request(server.callback()).post('/me').set(
+  //     "Authorization", "Bearer " + userJohnDoeToken.token
+  //   );
+
+  //   userJohnDoeToken = response.body;
+
+  //   expect(response.status).toEqual(200);
+  //   expect(response.body).toHaveProperty("token");
+
+  // });
+});
+
+describe('Like tests', () => {
   test('get home route  GET /', async () => {
     const response = await request(server.callback()).get('/most-liked');
     expect(response.status).toEqual(200);

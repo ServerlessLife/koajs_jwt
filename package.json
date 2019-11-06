@@ -6,7 +6,6 @@
   "scripts": {
     "start": "nodemon  --watch server/**/* -e ts,tsx --exec ts-node ./server/index.ts",
     "start-mysql": "docker-compose up",
-    "init-db-rez": "docker exec -it dev_mysql mysql -u root -p",
     "db-init": "docker exec -i dev_mysql mysql --database user_evalutation -u root --password=root < create_db.sql",
     "test": "jest"
   },

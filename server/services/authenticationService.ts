@@ -1,9 +1,10 @@
 import * as bcrypt from 'bcrypt'
 import * as dbService from "./dbService";
-import { HttpError } from './httpError';
+import { MyHttpError } from './myHttpError';
 import * as jsonwebtoken from 'jsonwebtoken'
 import { config } from '../config';
 import { Connection } from 'promise-mysql-native';
+import { validateNotNull, validateMaxLenght } from '../helpers/validationHelper';
 
 const SQL_USER_INSERT = 'INSERT INTO user SET ?';
 const SQL_USER_UPDATE_PASSWORD = 'UPDATE user SET password = ? WHERE username = ?';
@@ -20,9 +21,15 @@ export async function signup(user: {
     email: string,
     password: string
 }) {
-    if (!user.username || !user.password || !user.email || !user.name || !user.surname) {
-        throw new HttpError('Expected an object with username, name, surname, email, password.', 400, true);
-    }
+    validateNotNull(user.username, "username")
+    validateMaxLenght(user.username, 254, "username");
+    validateNotNull(user.name, "name")
+    validateMaxLenght(user.name, 60, "name");
+    validateNotNull(user.surname, "surname")
+    validateMaxLenght(user.surname, 60, "surname");
+    validateNotNull(user.email, "email")
+    validateMaxLenght(user.email, 254, "email");
+    validateNotNull(user.password, "password")
 
     let passwordHash = await _hashPassword(user.password);
 
@@ -45,8 +52,8 @@ export async function signup(user: {
     }
     catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
-            throw new HttpError('User exists.', 406, true);
-        }
+            throw new MyHttpError('User exists.', 409, true);
+        }   
         else {
             throw err;
         }
@@ -58,7 +65,6 @@ export async function signup(user: {
 
 async function _hashPassword(password: string) {
     let passwordHash = await bcrypt.hash(password, 5);
-
     return passwordHash;
 }
 
@@ -81,7 +87,7 @@ export async function login(auth: {
                 email: user.email,
             })
         } else {
-            throw new HttpError('Invalid username or password.', 401, true);
+            throw new MyHttpError('Invalid username or password.', 401, true);
         }
     }
     finally {
@@ -150,7 +156,7 @@ export async function updatePassword(passwordChange: { username: string, oldPass
                 email: user.email,
             })
         } else {
-            throw new HttpError('Invalid old password.', 401, true);
+            throw new MyHttpError('Invalid old password.', 401, true);
         }
     }
     finally {

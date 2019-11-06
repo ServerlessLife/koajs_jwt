@@ -10,6 +10,10 @@ const dbConfig = {
   database: config.dbName
 };
 
+export function setDatabase(dbName: string) {
+    dbConfig.database = dbName;
+}
+
 export async function getConnectionFromPool() {
   if (!pool) {
     pool = mysql.createPool(dbConfig);
