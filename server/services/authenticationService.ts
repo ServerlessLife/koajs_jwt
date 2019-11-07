@@ -140,6 +140,9 @@ export async function getUserData(username: string) {
  * @param passwordChange 
  */
 export async function updatePassword(passwordChange: { username: string, oldPassword: string, newPassword: string }) {
+    validateNotNull(passwordChange.oldPassword, "oldPassword")
+    validateNotNull(passwordChange.newPassword, "newPassword")
+
     const connection = await dbService.getConnectionFromPool();
     try {
         let user = await _validatePasswordAndGetUser(connection, {

@@ -55,7 +55,7 @@ let userJohnDoe = {
 }
 
 describe('Authetnication tests', () => {
-  test('Singup sloud fail, because of missing data', async () => {
+  test('Singup shoud fail, because of missing data', async () => {
     let user = {
       ...userJohnDoe,
       username: undefined
@@ -102,7 +102,7 @@ describe('Authetnication tests', () => {
     expect(response.body).toHaveProperty("message");
   });
 
-  test('Singup sloud fail, because of too long string', async () => {
+  test('Singup shoud fail, because of too long string', async () => {
     let user = {
       ...userJohnDoe,
       username: 'x'.repeat(500)
@@ -149,7 +149,6 @@ describe('Authetnication tests', () => {
     const response = await request(server.callback()).post('/signup').send(userJohnDoe);
     expect(response.status).toEqual(200);
     expect(response.body).toHaveProperty("token");
-
   });
 
   test('Singup user Toni Baloni should return token', async () => {
@@ -174,7 +173,6 @@ describe('Authetnication tests', () => {
     });
     expect(response.status).toEqual(401);
     expect(response.body).toHaveProperty("message");
-
   });
 
   let userJohnDoeToken;
@@ -192,17 +190,73 @@ describe('Authetnication tests', () => {
 
   });
 
-  // test('Read my (John Doe) data', async () => {
-  //   const response = await request(server.callback()).post('/me').set(
-  //     "Authorization", "Bearer " + userJohnDoeToken.token
-  //   );
+  test('Fail read my (John Doe) data becouse of missing authentication', async () => {
+    let response = await request(server.callback()).get('/me').set(
+      "Authorization", "Bearer " + 'xxx'
+    );
 
-  //   userJohnDoeToken = response.body;
+    expect(response.status).toEqual(401);
 
-  //   expect(response.status).toEqual(200);
-  //   expect(response.body).toHaveProperty("token");
+    response = await request(server.callback()).get('/me');
+    expect(response.status).toEqual(401);
+  });
 
-  // });
+  test('Read my (John Doe) data', async () => {
+    const response = await request(server.callback()).get('/me').set(
+      "Authorization", "Bearer " + userJohnDoeToken.token
+    );
+
+    expect(response.status).toEqual(200);
+    let expectedResponse = { ...userJohnDoe };
+    delete expectedResponse.password;
+    expect(response.body).toMatchObject(expectedResponse);
+  });
+
+
+  test('Change password fail because of missing data', async () => {
+    let response = await request(server.callback()).post('/me/update-password').send({
+      oldPassword: userJohnDoe.password,
+    }).set(
+      "Authorization", "Bearer " + userJohnDoeToken.token
+    );
+
+    expect(response.status).toEqual(400);
+
+    response = await request(server.callback()).post('/me/update-password').send({
+      newPassword: 'newPassword'
+    }).set(
+      "Authorization", "Bearer " + userJohnDoeToken.token
+    );
+
+    expect(response.status).toEqual(400);
+
+    response = await request(server.callback()).post('/me/update-password').set(
+      "Authorization", "Bearer " + userJohnDoeToken.token
+    );
+
+    expect(response.status).toEqual(400);
+  });
+
+  test('Change password fail because of becouse of missing authentication', async () => {
+    const response = await request(server.callback()).post('/me/update-password').send({
+      oldPassword: userJohnDoe.password,
+      newPassword: 'newPassword'
+    });
+
+    expect(response.status).toEqual(401);
+  });
+
+  test('Change password', async () => {
+    const response = await request(server.callback()).post('/me/update-password').send({
+      oldPassword: userJohnDoe.password,
+      newPassword: 'newPassword'
+    }).set(
+      "Authorization", "Bearer " + userJohnDoeToken.token
+    );
+
+    expect(response.status).toEqual(200);
+    expect(response.body).toHaveProperty("token");
+  });
 });
 
 describe('Like tests', () => {

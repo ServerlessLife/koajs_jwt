@@ -17,6 +17,10 @@ server.use(async (ctx, next) => {
         await next();
     }
     catch (err) {                
+        // console.error("ERROR");
+        // console.error(ctx.url);
+        // console.error(ctx.header);
+        // console.error(err);
         if (err instanceof MyHttpError) {
             //my custom error
             ctx.status = err.status;
