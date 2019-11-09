@@ -24,6 +24,15 @@
             "args": [
                 "${workspaceFolder}/server/index.ts"
             ]
-    }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Jest Test",
+            "program": "${workspaceFolder}\\node_modules\\jest\\bin\\jest",
+            "args": ["--runInBand", "--config=${workspaceFolder}\\jest.config.js"],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+      },
     ]
 }

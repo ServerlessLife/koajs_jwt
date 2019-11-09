@@ -12,3 +12,12 @@ CREATE TABLE `like` (
     likeUsername VARCHAR(254) NOT NULL,
     PRIMARY KEY (username, likeUsername)    
 );
+
+ALTER TABLE `like`
+ADD CONSTRAINT FK_username
+FOREIGN KEY (username) REFERENCES user(username);
+
+
+ALTER TABLE `like`
+ADD CONSTRAINT FK_likeUsername
+FOREIGN KEY (likeUsername) REFERENCES user(username);
