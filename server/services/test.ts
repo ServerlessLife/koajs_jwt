@@ -26,7 +26,9 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  /*
+  /****************************************************************************************** 
+  **************** Uncomment if you want to drop temporary databaser after tests ************
+  *******************************************************************************************
   const connection = await dbService.getSingleConnection({ multipleStatements: true });
   try {
     await connection.query(
